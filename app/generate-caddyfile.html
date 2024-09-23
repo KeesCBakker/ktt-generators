@@ -37,7 +37,7 @@
       ><input type="checkbox" id="addHtmlPagesWithTrailingSlash" name="addHtmlPagesWithTrailingSlash" data-bind="checked: addHtmlPagesWithTrailingSlash" />
     </div>
     <div>
-      <label for="redirectRootToIndexHtml">Redirect root to index.html</label
+      <label for="redirectRootToIndexHtml">Redirect root to index.html:</label
       ><input type="checkbox" id="redirectRootToIndexHtml" name="redirectRootToIndexHtml" data-bind="checked: redirectRootToIndexHtml" />
     </div>
     <!-- /ko -->
@@ -178,6 +178,7 @@
         font-size: 14px;
         background-color: #eee;
         padding: 2em;
+        column-count: 2;
         
         &>div+div {
             margin-top: 0.5em;
@@ -187,6 +188,11 @@
             background-color: #fff;
             padding: 2px 2px 2px 10px;
             border-radius: 4px;
+        }
+        
+        label {
+            width: 180px;
+            display: inline-block;
         }
     }
     
