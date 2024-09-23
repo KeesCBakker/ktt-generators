@@ -237,11 +237,11 @@ ENTRYPOINT dotnet "$PROGRAM"</pre>
         border-radius: 4px;
       }
 
-      input[type=text] {
+      input[type="text"] {
         width: calc(100% - 120px);
       }
 
-      input[type=number] {
+      input[type="number"] {
         width: 75px;
       }
 
@@ -255,5 +255,10 @@ ENTRYPOINT dotnet "$PROGRAM"</pre>
       padding: 2em !important;
       max-height: 50vh;
     }
+  }
+  
+  .entry-content > p {
+    margin-left: 0;
+    max-width: 100%;
   }
 </style>
