@@ -1,0 +1,199 @@
+<div id="source">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
+  <script>
+    function Model() {
+      let self = this
+
+      this.serviceName = ko.observable("Blaze.Prime.Service.Api")
+      this.port = ko.observable("5000")
+      this.aspNetVersion = ko.observable("8.0")
+      this.addTesting = ko.observable(true)
+      this.addMultiProjectSupport = ko.observable(true)
+      this.otherProjects = ko.observable("")
+      this.projectsToPublish = ko.computed(function () {
+        let projects = (this.projectsToPublish || "").split(" ")
+        return ["$MAIN_API_NAME"].concat(projects)
+          .join(" ")
+      }, this)
+    }
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+      ko.applyBindings(new Model(), document.getElementById("source"))
+    })
+  </script>
+  <div class="form">
+    <div><label for="serviceName">Service Name:</label><input type="text" id="serviceName" name="serviceName" data-bind="value: serviceName, valueUpdate: 'afterkeydown'" /></div>
+    <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
+    <div>
+      <label for="aspNetVersion">ASP.NET Version:</label
+      ><input type="number" min="7.0" step="0.1" id="aspNetVersion" name="aspNetVersion" data-bind="value: aspNetVersion, valueUpdate: 'afterkeydown'" />
+    </div>
+    <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
+    <div><label for="otherProjects">Other projects:</label><input type="text" id="otherProjects" name="otherProjects" data-bind="value: otherProjects, valueUpdate: 'afterkeydown'" /></div>
+  </div>
+  <style>
+    #source {
+      .form {
+        display: grid;
+        grid-template-columns: 150px auto;
+        grid-auto-rows: minmax(auto, auto);
+        grid-gap: 10px;
+        max-width: 500px;
+      }
+
+      .form div {
+        display: contents;
+      }
+
+      label {
+        grid-column: 1 / 2;
+        align-self: center;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        grid-column: 2 / 3;
+        width: auto;
+        max-width: 200px; /* Adjust as needed */
+      }
+
+      input[type="checkbox"] {
+        grid-column: 2 / 3;
+        justify-self: start;
+      }
+
+      input[type="number"] {
+        grid-column: 2 / 3;
+        justify-self: start;
+        max-width: 75px;
+      }
+    }
+  </style>
+  <pre class="wp-block-code lang-docker"><code class="nohighlight">########################
+# Configuration settings
+########################
+
+ARG MAIN_API_NAME="<span data-bind="text: serviceName"></span>"
+ARG \
+   MAIN_API_DLL="$MAIN_API_NAME.dll" \
+   PROJECTS_TO_PUBLISH="<span data-bind="text: projectsToPublish"></span>" \
+   PORT=<span data-bind="text: port"></span> \
+   ASPNET_VERSION="<span data-bind="text: aspNetVersion"></span>" \
+   # options: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic]
+   # minimal keeps your pipeline readable while inforing you what's going on
+   VERBOSITY="minimal" \
+   APP_DIR="/app" \
+   TAG="" <!-- ko if:  addTesting -->\
+   EXECUTE_TESTS="true"
+   <!-- /ko -->
+
+#########################################################################
+# Build image, uses VERBOSITY, EXECUTE_TESTS, PROJECTS_TO_PUBLISH, APP_DIR
+#########################################################################
+
+FROM mcr.microsoft.com/dotnet/sdk:$ASPNET_VERSION AS build
+
+ARG VERBOSITY EXECUTE_TESTS PROJECTS_TO_PUBLISH APP_DIR
+
+ENV \
+   TZ=Europe/Amsterdam \
+   DOTNET_CLI_TELEMETRY_OPTOUT=true \
+   DOTNET_NOLOGO=true
+
+WORKDIR /build
+
+# Let's restore the solution, nuget and project files and do a restore
+# in cachable layers. This will speed up the build process greatly
+
+# copy global files to restore
+COPY *.sln *.*config ./
+
+# copy src files to restore
+COPY src/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p src/${file%.*}/ && mv $file src/${file%.*}/; done
+
+# copy test files to restore
+COPY test/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p test/${file%.*}/ && mv $file test/${file%.*}/; done; \
+   echo "" \
+   && echo "---------" \
+   && echo "RESTORING" \
+   && echo "---------" \
+   && echo "" \
+   && dotnet restore --verbosity "$VERBOSITY" || exit 1
+
+# copy dirs that are only needed for building and testing
+COPY src ./src
+COPY test ./test
+
+# Note on build: don't use --no-restore, sometimes certain packages cannot be
+# restored by the dotnet restore. The build will add them, as it has more context (!?)
+# example: Package System.Text.Json, version 6.0.0 was not found
+
+RUN echo "" \
+   && echo "--------" \
+   && echo "BUILDING" \
+   && echo "--------" \
+   && echo "" \
+   && dotnet build --configuration Release --verbosity "$VERBOSITY" -nowarn:NETSDK1004 || exit 1
+
+# defining the argument here caches the previous layers when the value switches
+<!-- ko if:  addTesting -->ARG EXECUTE_TESTS
+<!-- /ko -->RUN echo "" \<!-- ko if:  addTesting -->
+   && echo "-------" \
+   && echo "TESTING" \
+   && echo "-------" \
+   && echo ""; \
+   if [ "$EXECUTE_TESTS" = "true" ]; then \
+      dotnet test --configuration Release --logger "console;verbosity=$VERBOSITY" --no-build || exit 1; \
+   else \
+      echo "Skipping unit tests"; \
+   fi; \
+   echo "" \<!-- /ko -->
+   && echo "----------" \
+   && echo "PUBLISHING" \
+   && echo "----------" \
+   && echo ""; \
+   for project in $PROJECTS_TO_PUBLISH; do \
+      echo "Publishing $project..."; \
+      dotnet publish "src/$project/$project.csproj" \
+        --configuration Release \
+        --output "$APP_DIR/$project" \
+        --no-restore -nowarn:NETSDK1004 || exit 1; \
+   done
+
+#####################################################################
+# Runtime image, uses PORT, TAG, MAIN_API_DLL, MAIN_API_NAME, APP_DIR
+#####################################################################
+
+FROM mcr.microsoft.com/dotnet/aspnet:$ASPNET_VERSION-alpine as runtime
+
+RUN apk add --no-cache icu-libs krb5-libs libgcc libintl libssl3 libstdc++ zlib tzdata
+
+ARG PORT MAIN_API_NAME APP_DIR MAIN_API_DLL TAG
+
+WORKDIR $APP_DIR
+COPY --from=build $APP_DIR .
+
+# create a new user and change directory ownership
+RUN adduser --disabled-password \
+   --home "$APP_DIR" \
+   --gecos '' dotnetuser && chown -R dotnetuser:dotnetuser "$APP_DIR"
+
+# impersonate into the new user
+USER dotnetuser
+
+ENV \
+   ASPNETCORE_URLS=http://*:$PORT \
+   ASPNETCORE_ENVIRONMENT=Production \
+   TZ=Europe/Amsterdam \
+   DOTNET_CLI_TELEMETRY_OPTOUT=true \
+   DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+EXPOSE $PORT
+
+WORKDIR "$APP_DIR/$MAIN_API_NAME"
+
+ENV PROGRAM="$MAIN_API_DLL"
+ENTRYPOINT dotnet "$PROGRAM"</code></pre>
+</div>

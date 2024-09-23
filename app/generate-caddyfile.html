@@ -1,0 +1,152 @@
+<div id="source">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
+  <script>
+    function Model() {
+      let self = this
+
+      this.enableAdmin = ko.observable(false)
+      this.addHtmlPages = ko.observable(true)
+      this.addHtmlPagesWithTrailingSlash = ko.observable(true)
+      this.redirectRootToIndexHtml = ko.observable(true);
+      this.enablePrometheusMetrics = ko.observable(false)
+      this.port = ko.observable(8080)
+      this.enable404 = ko.observable(true)
+      this.enableHtmlTemplates = ko.observable(false)
+      this.disableTls = ko.observable(true)
+    }
+
+    document.addEventListener("DOMContentLoaded", function (event) {
+      ko.applyBindings(new Model(), document.getElementById("source"))
+    })
+  </script>
+  <div class="form">
+    <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
+    <div><label for="addHtmlPages">Add HTML pages:</label><input type="checkbox" id="addHtmlPages" name="addHtmlPages" data-bind="checked: addHtmlPages" /></div>
+    <!-- ko if:  addHtmlPages -->
+    <div>
+      <label for="addHtmlPagesWithTrailingSlash">Add trailing / support:</label
+      ><input type="checkbox" id="addHtmlPagesWithTrailingSlash" name="addHtmlPagesWithTrailingSlash" data-bind="checked: addHtmlPagesWithTrailingSlash" />
+    </div>
+    <div>
+      <label for="redirectRootToIndexHtml">Redirect root to index.html</label
+      ><input type="checkbox" id="redirectRootToIndexHtml" name="redirectRootToIndexHtml" data-bind="checked: redirectRootToIndexHtml" />
+    </div>
+    <!-- /ko -->
+    <div><label for="enable404">Enable 404 HTML page:</label><input type="checkbox" id="enable404" name="enable404" data-bind="checked: enable404" /></div>
+    <div><label for="enableHtmlTemplates">Enable HTML templates:</label><input type="checkbox" id="enableHtmlTemplates" name="enableHtmlTemplates" data-bind="checked: enableHtmlTemplates" /></div>
+    <div><label for="enableAdmin">Fake admin:</label><input type="checkbox" id="enableAdmin" name="enableAdmin" data-bind="checked: enableAdmin" /></div>
+    <!-- ko if:  enableAdmin -->
+    <div>
+      <label for="enablePrometheusMetrics">Enable Prometheus metrics:</label
+      ><input type="checkbox" id="enablePrometheusMetrics" name="enablePrometheusMetrics" data-bind="checked: enablePrometheusMetrics" />
+    </div>
+    <!-- /ko -->
+
+    <div><label for="disableTls">Disable TLS:</label><input type="checkbox" id="disableTls" name="disableTls" data-bind="checked: disableTls" /></div>
+  </div>
+  <style>
+    #source {
+      .form {
+        display: grid;
+        grid-template-columns: 200px auto;
+        grid-auto-rows: minmax(auto, auto);
+        grid-gap: 10px;
+        max-width: 500px;
+      }
+
+      .form div {
+        display: contents;
+      }
+
+      label {
+        grid-column: 1 / 2;
+        align-self: center;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        grid-column: 2 / 3;
+        width: auto;
+        max-width: 200px; /* Adjust as needed */
+      }
+
+      input[type="checkbox"] {
+        grid-column: 2 / 3;
+        justify-self: start;
+      }
+
+      input[type="number"] {
+        grid-column: 2 / 3;
+        justify-self: start;
+        max-width: 75px;
+      }
+    }
+  </style>
+  <pre class="wp-block-code lang-docker"><code class="nohighlight">{
+  # no need for an admin interface
+  admin off<!-- ko if:  disableTls -->
+
+  # https is done by something else
+  auto_https off<!-- /ko --><!-- ko if:  enableAdmin && enablePrometheusMetrics -->
+
+  # enable prometheus metrics
+  servers {
+    metrics
+  }<!-- /ko -->
+}
+
+:<span data-bind="text:port"></span> {
+  # Set the root directory for serving files
+  root * ./app/
+
+  # Serve all static files including HTML, CSS, JS, images, etc.
+  file_server
+
+  <!-- ko if:  enableHtmlTemplates --># Enable Server Side Includes for HTML files
+  templates {
+    file_extensions .html
+  }
+
+  <!-- /ko --><!-- ko if:  addHtmlPages() && addHtmlPagesWithTrailingSlash() --># First, rewrite URLs with trailing slash to the same path without the slash
+  @trailingSlash {
+    path_regexp trailing ^(.+)/$
+  }
+  rewrite @trailingSlash /{http.regexp.trailing.1}
+
+  <!-- /ko --><!-- ko if:  addHtmlPages --># Try to rewrite URLs to corresponding .html files if they exist
+  try_files {path}.html {path}
+
+  <!-- /ko -->encode zstd gzip<!-- ko if:  enable404 -->
+
+  # Handle 404 errors
+  handle_errors {
+    @404 {
+      expression {http.error.status_code} == 404
+    }
+    rewrite @404 /404.html
+    file_server
+  }
+  <!-- /ko --><!-- ko if:  addHtmlPages() && redirectRootToIndexHtml() -->
+  
+  # rewrite the root URL to /index.html
+  rewrite / /index.html
+  
+  # redirect the /index.html to /
+  redir /index.html / 301
+  redir /index / 301<!-- ko if:  addHtmlPagesWithTrailingSlash -->
+  redir /index/ / 301<!-- /ko --><!-- /ko --><!-- ko if:  enableHtmlTemplates -->
+
+  # Block access to the includes directory
+  @includes {
+    path /includes/*
+  }
+  <!-- /ko -->
+}<!-- ko if:  enableAdmin -->
+
+# mimic the admin endpoint
+:2019 {
+  respond /status "I'm up!" 200<!-- ko if:  enablePrometheusMetrics -->
+  metrics /metrics<!-- /ko -->
+  encode zstd gzip
+}<!-- /ko --></code></pre>
+</div>
