@@ -17,7 +17,7 @@
 
       this.applyHighlight = function (elements) {
         elements
-          .filter(x => x.tagName === "CODE")
+          .filter(x => x.tagName === "PRE")
           .forEach(x => {
             if (hljs) hljs.highlightElement(x);
           });
