@@ -160,16 +160,39 @@
   };
 </script>
 <style>
-  #source {
-    max-width: 850px;
+#feature-image {
+    display: none;
+}
+    
+.entry-content {
+    width: 100% !important;
+}
 
+#source {
+    max-width: 100%;
+    
     .form {
-      column-count: 2;
-      
-      label {
-        width: 180px;
-        display: inline-block;
-      }
+        margin-top: 2em;
+        margin-bottom: 1em;
+        font-family: arial;
+        font-size: 14px;
+        background-color: #eee;
+        padding: 2em;
+        
+        &>div+div {
+            margin-top: 0.5em;
+        }
+        
+        input[type=number] {
+            background-color: #fff;
+            padding: 2px 2px 2px 10px;
+            border-radius: 4px;
+        }
     }
-  }
+    
+    pre {
+        padding:2em !important;
+        max-height: 50vh;
+    }
+}
 </style>
