@@ -38,6 +38,7 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
+    <br/><br/>
   </div>
   <pre data-bind="saveHtmlContent: code" style="display: none">########################
 # Configuration settings
@@ -256,7 +257,7 @@ ENTRYPOINT dotnet "$PROGRAM"</pre>
       max-height: 50vh;
     }
   }
-  
+
   .entry-content > p {
     margin-left: 0;
     max-width: 100%;
