@@ -53,7 +53,7 @@ ARG \
    # minimal keeps your pipeline readable while inforing you what's going on
    VERBOSITY="minimal" \
    APP_DIR="/app" \
-   TAG="" <!-- ko if:  addTesting -->\
+   TAG="" <!-- ko if: addTesting -->\
    EXECUTE_TESTS="true"
    <!-- /ko -->
 
@@ -80,7 +80,7 @@ COPY *.sln *.*config ./
 
 # copy src files to restore
 COPY src/*/*.csproj ./
-RUN for file in $(ls *.csproj); do mkdir -p src/${file%.*}/ && mv $file src/${file%.*}/; done
+RUN for file in $(ls *.csproj); do mkdir -p src/${file%.*}/ && mv $file src/${file%.*}/; done<!-- ko if: addTesting -->
 
 # copy test files to restore
 COPY test/*/*.csproj ./
@@ -90,11 +90,11 @@ RUN for file in $(ls *.csproj); do mkdir -p test/${file%.*}/ && mv $file test/${
    && echo "RESTORING" \
    && echo "---------" \
    && echo "" \
-   && dotnet restore --verbosity "$VERBOSITY" || exit 1
+   && dotnet restore --verbosity "$VERBOSITY" || exit 1<!-- /ko -->
 
 # copy dirs that are only needed for building and testing
-COPY src ./src
-COPY test ./test
+COPY src ./src<!-- ko if: addTesting -->
+COPY test ./test<!-- /ko -->
 
 # Note on build: don't use --no-restore, sometimes certain packages cannot be
 # restored by the dotnet restore. The build will add them, as it has more context (!?)
@@ -108,8 +108,8 @@ RUN echo "" \
    && dotnet build --configuration Release --verbosity "$VERBOSITY" -nowarn:NETSDK1004 || exit 1
 
 # defining the argument here caches the previous layers when the value switches
-<!-- ko if:  addTesting -->ARG EXECUTE_TESTS
-<!-- /ko -->RUN echo "" \<!-- ko if:  addTesting -->
+<!-- ko if: addTesting -->ARG EXECUTE_TESTS
+<!-- /ko -->RUN echo "" \<!-- ko if: addTesting -->
    && echo "-------" \
    && echo "TESTING" \
    && echo "-------" \
