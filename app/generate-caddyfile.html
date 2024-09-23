@@ -2,22 +2,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
   <script>
     function Model() {
-      let self = this
+      let self = this;
 
-      this.enableAdmin = ko.observable(false)
-      this.addHtmlPages = ko.observable(true)
-      this.addHtmlPagesWithTrailingSlash = ko.observable(true)
+      this.enableAdmin = ko.observable(false);
+      this.addHtmlPages = ko.observable(true);
+      this.addHtmlPagesWithTrailingSlash = ko.observable(true);
       this.redirectRootToIndexHtml = ko.observable(true);
-      this.enablePrometheusMetrics = ko.observable(false)
-      this.port = ko.observable(8080)
-      this.enable404 = ko.observable(true)
-      this.enableHtmlTemplates = ko.observable(false)
-      this.disableTls = ko.observable(true)
+      this.enablePrometheusMetrics = ko.observable(false);
+      this.port = ko.observable(8080);
+      this.enable404 = ko.observable(true);
+      this.enableHtmlTemplates = ko.observable(false);
+      this.disableTls = ko.observable(true);
+      this.code = ko.observable("");
+
+      this.applyHighlight = function (elements) {
+        elements
+          .filter(x => x.tagName === "CODE")
+          .forEach(x => {
+            if (hljs) hljs.highlightElement(x);
+          });
+      };
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
-      ko.applyBindings(new Model(), document.getElementById("source"))
-    })
+      ko.applyBindings(new Model(), document.getElementById("source"));
+    });
   </script>
   <div class="form">
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
@@ -82,7 +91,7 @@
       }
     }
   </style>
-  <pre class="wp-block-code lang-docker"><code class="nohighlight">{
+  <pre data-bind="saveHtmlContent: code" style="display: none">{
   # no need for an admin interface
   admin off<!-- ko if:  disableTls -->
 
@@ -148,5 +157,44 @@
   respond /status "I'm up!" 200<!-- ko if:  enablePrometheusMetrics -->
   metrics /metrics<!-- /ko -->
   encode zstd gzip
-}<!-- /ko --></code></pre>
+}<!-- /ko --></pre>
+  <!-- ko if:  code -->
+  <pre data-bind="template: { name: 'codeTemplate', data: code, afterRender: applyHighlight }"></pre>
+  <!-- /ko -->
 </div>
+<script type="text/html" id="codeTemplate">
+  <!--
+  --><code class="lang-yml" data-bind="text: $data"></code>
+</script>
+<script>
+  ko.bindingHandlers.saveHtmlContent = {
+    init: function (element, valueAccessor) {
+      var htmlObservable = valueAccessor();
+
+      // Function to get the inner text only (ignores HTML and comments)
+      function extractInnerText(htmlElement) {
+        return htmlElement.textContent || htmlElement.innerText;
+      }
+
+      // Save the inner text content
+      htmlObservable(extractInnerText(element));
+
+      // Set up a MutationObserver to monitor changes in the element's content
+      var observer = new MutationObserver(function () {
+        htmlObservable(extractInnerText(element));
+      });
+
+      // Start observing changes in the child elements
+      observer.observe(element, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+
+      // Cleanup when the element is removed
+      ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+        observer.disconnect();
+      });
+    }
+  };
+</script>

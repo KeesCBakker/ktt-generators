@@ -2,24 +2,23 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
   <script>
     function Model() {
-      let self = this
+      let self = this;
 
-      this.serviceName = ko.observable("Blaze.Prime.Service.Api")
-      this.port = ko.observable("5000")
-      this.aspNetVersion = ko.observable("8.0")
-      this.addTesting = ko.observable(true)
-      this.addMultiProjectSupport = ko.observable(true)
-      this.otherProjects = ko.observable("")
+      this.serviceName = ko.observable("Blaze.Prime.Service.Api");
+      this.port = ko.observable("5000");
+      this.aspNetVersion = ko.observable("8.0");
+      this.addTesting = ko.observable(true);
+      this.addMultiProjectSupport = ko.observable(true);
+      this.otherProjects = ko.observable("");
       this.projectsToPublish = ko.computed(function () {
-        let projects = (this.projectsToPublish || "").split(" ")
-        return ["$MAIN_API_NAME"].concat(projects)
-          .join(" ")
-      }, this)
+        let projects = (this.projectsToPublish || "").split(" ");
+        return ["$MAIN_API_NAME"].concat(projects).join(" ");
+      }, this);
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
-      ko.applyBindings(new Model(), document.getElementById("source"))
-    })
+      ko.applyBindings(new Model(), document.getElementById("source"));
+    });
   </script>
   <div class="form">
     <div><label for="serviceName">Service Name:</label><input type="text" id="serviceName" name="serviceName" data-bind="value: serviceName, valueUpdate: 'afterkeydown'" /></div>
