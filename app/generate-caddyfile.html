@@ -53,44 +53,6 @@
 
     <div><label for="disableTls">Disable TLS:</label><input type="checkbox" id="disableTls" name="disableTls" data-bind="checked: disableTls" /></div>
   </div>
-  <style>
-    #source {
-      .form {
-        display: grid;
-        grid-template-columns: 200px auto;
-        grid-auto-rows: minmax(auto, auto);
-        grid-gap: 10px;
-        max-width: 500px;
-      }
-
-      .form div {
-        display: contents;
-      }
-
-      label {
-        grid-column: 1 / 2;
-        align-self: center;
-      }
-
-      input[type="text"],
-      input[type="number"] {
-        grid-column: 2 / 3;
-        width: auto;
-        max-width: 200px; /* Adjust as needed */
-      }
-
-      input[type="checkbox"] {
-        grid-column: 2 / 3;
-        justify-self: start;
-      }
-
-      input[type="number"] {
-        grid-column: 2 / 3;
-        justify-self: start;
-        max-width: 75px;
-      }
-    }
-  </style>
   <pre data-bind="saveHtmlContent: code" style="display: none">{
   # no need for an admin interface
   admin off<!-- ko if:  disableTls -->
@@ -159,12 +121,11 @@
   encode zstd gzip
 }<!-- /ko --></pre>
   <!-- ko if:  code -->
-  <pre data-bind="template: { name: 'codeTemplate', data: code, afterRender: applyHighlight }"></pre>
+  <div data-bind="template: { name: 'codeTemplate', data: code, afterRender: applyHighlight }"></div>
   <!-- /ko -->
 </div>
 <script type="text/html" id="codeTemplate">
-  <!--
-  --><code class="lang-yml" data-bind="text: $data"></code>
+  <pre><code class="lang-yml" data-bind="text: $data"></code></pre>
 </script>
 <script>
   ko.bindingHandlers.saveHtmlContent = {
@@ -198,3 +159,17 @@
     }
   };
 </script>
+<style>
+  #source {
+    max-width: 850px;
+
+    .form {
+      column-count: 2;
+      
+      label {
+        width: 180px;
+        display: inline-block;
+      }
+    }
+  }
+</style>
