@@ -11,8 +11,11 @@
       this.addMultiProjectSupport = ko.observable(true);
       this.otherProjects = ko.observable("");
       this.projectsToPublish = ko.computed(function () {
-        let projects = (this.projectsToPublish || "").split(" ");
-        return ["$MAIN_API_NAME"].concat(projects).join(" ");
+        let projects = (this.otherProjects() || "").split(" ");
+        return ["$MAIN_API_NAME"]
+          .concat(projects)
+          .filter(x => x)
+          .join(" ");
       }, this);
 
       this.code = ko.observable("");
@@ -38,7 +41,7 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
-    <br/><br/>
+    <br /><br />
   </div>
   <pre data-bind="saveHtmlContent: code" style="display: none">########################
 # Configuration settings
