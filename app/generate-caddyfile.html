@@ -224,21 +224,6 @@
   }
 </style>
 <script>
-  function updateQuery(name, value) {
-    var url = new URL(window.location);
-    if (value) {
-      url.searchParams.set(name, value);
-    } else {
-      url.searchParams.delete(name);
-    }
-    history.replaceState(null, "", url);
-  }
-
-  function makeBool(x) {
-    return ["true", 1].includes(x);
-  }
-</script>
-<script>
   ko.trackChange = (store, observable, key, echo = null) => {
     //initialize from stored value, or if no value is stored yet,
     //use the current value
