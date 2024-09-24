@@ -52,7 +52,7 @@
     <!-- /ko -->
 
     <div><label for="disableTls">Disable TLS:</label><input type="checkbox" id="disableTls" name="disableTls" data-bind="checked: disableTls" /></div>
-    <br/><br/>
+    <br /><br />
   </div>
   <pre data-bind="saveHtmlContent: code" style="display: none">{
   # no need for an admin interface
@@ -207,5 +207,15 @@
   .entry-content > p {
     margin-left: 0;
     max-width: 100%;
+  }
+
+  @media screen and (max-width: 700px) {
+    .form {
+      column-count: 1 !important;
+    }
+
+    .form br {
+      display: none;
+    }
   }
 </style>
