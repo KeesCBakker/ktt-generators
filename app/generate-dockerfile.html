@@ -23,7 +23,7 @@
         elements
           .filter(x => x.tagName === "PRE")
           .forEach(x => {
-            if (hljs) hljs.highlightElement(x);
+            if (window.hljs) window.hljs.highlightElement(x);
           });
       };
     }

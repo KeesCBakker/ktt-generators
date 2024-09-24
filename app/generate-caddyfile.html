@@ -15,17 +15,21 @@
       this.disableTls = ko.observable(true);
       this.code = ko.observable("");
 
+      this.__skip = ["code"];
+
       this.applyHighlight = function (elements) {
         elements
           .filter(x => x.tagName === "PRE")
           .forEach(x => {
-            if (hljs) hljs.highlightElement(x);
+            if (window.hljs) window.hljs.highlightElement(x);
           });
       };
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
-      ko.applyBindings(new Model(), document.getElementById("source"));
+      const model = new Model();
+      ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
+      ko.applyBindings(model, document.getElementById("source"));
     });
   </script>
   <div class="form">
@@ -219,3 +223,146 @@
     }
   }
 </style>
+<script>
+  function updateQuery(name, value) {
+    var url = new URL(window.location);
+    if (value) {
+      url.searchParams.set(name, value);
+    } else {
+      url.searchParams.delete(name);
+    }
+    history.replaceState(null, "", url);
+  }
+
+  function makeBool(x) {
+    return ["true", 1].includes(x);
+  }
+</script>
+<script>
+  ko.trackChange = (store, observable, key, echo = null) => {
+    //initialize from stored value, or if no value is stored yet,
+    //use the current value
+
+    const value = store.get(key);
+    if (value !== null) {
+      if (echo) echo("Restoring value for", key, value);
+
+      //restore current value
+      observable(value);
+    }
+
+    //track the changes
+    observable.subscribe(newValue => {
+      if (echo) echo("Storing new value for", key, newValue);
+      store.set(key, newValue);
+    });
+  };
+
+  ko.isComputed = instance => {
+    if (!instance || !instance.__ko_proto__) {
+      return false;
+    }
+
+    if (instance.__ko_proto__ === ko.dependentObservable) {
+      return true;
+    }
+
+    // Walk the prototype chain
+    return ko.isComputed(instance.__ko_proto__);
+  };
+
+  const defaultOptions = Object.freeze({
+    storage: localStorage,
+    traverseNonObservableProperties: true,
+    debug: false
+  });
+
+  ko.persistChanges = (model, prefix = "model-", options = defaultOptions, deep = 0) => {
+    options = Object.assign({}, defaultOptions, options);
+    options.echo = function () {
+      if (!options.debug) return;
+
+      if (deep > 0) {
+        return console.log("-".repeat(deep), ...arguments);
+      }
+      console.log(...arguments);
+    };
+
+    const storageWrapper = {
+      set: (key, value) => options.storage.setItem(key, JSON.stringify(value)),
+      get: key => JSON.parse(options.storage.getItem(key))
+    };
+
+    const skip = new Set(model.__skip || []);
+    skip.add("__skip");
+
+    for (let n in model) {
+      const observable = model[n];
+      const key = prefix + n;
+
+      if (skip.has(n)) {
+        options.echo("Skipping", n, "because it is on the __skip list.");
+        continue;
+      }
+
+      if (ko.isComputed(observable)) {
+        options.echo("Skipping", n, "because it is computed.");
+        continue;
+      }
+
+      if (typeof observable === "function") {
+        if (!ko.isObservable(observable)) {
+          options.echo("Skipping", n, "because it is a function.");
+          continue;
+        }
+
+        ko.trackChange(storageWrapper, observable, key, options.echo);
+        options.echo("Tracking change for", n, "in", key);
+        continue;
+      }
+
+      if (!options.traverseNonObservableProperties) {
+        options.echo("Skipping", n, "because options.traverseNonObservableProperties is false.");
+        continue;
+      }
+
+      if (typeof observable === "object" && observable !== null && !Array.isArray(observable)) {
+        options.echo("Tracking change for object", key);
+        ko.persistChanges(observable, key + "-", options, deep + 1);
+        continue;
+      }
+
+      options.echo("Skipping", n, observable);
+    }
+  };
+</script>
+<script>
+  class QueryStringStorage {
+    getItem(key) {
+      let value = new URLSearchParams(window.location.search).get(key);
+
+      if (!value) return value;
+
+      if (value != "false" && value != "true" && value.length > 0 && !["{", "[", '"'].includes(value[0])) {
+        return '"' + value + '"';
+      }
+
+      return value;
+    }
+
+    setItem(key, value) {
+      const params = new URLSearchParams(window.location.search);
+
+      if (value && value.length > 0) {
+        let f = value[0];
+        if (f == '"') {
+          //string
+          value = value.substring(1, value.length - 1);
+        }
+      }
+
+      params.set(key, value);
+      window.history.replaceState({}, "", "?" + params.toString());
+    }
+  }
+</script>
