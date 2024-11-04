@@ -37,7 +37,7 @@
       ko.applyBindings(model, document.getElementById("source"));
 
       setTimeout(function () {
-        [...document.querySelectorAll("pre")].map(x => window.hljs.highlightElement(x));
+        document.querySelectorAll("pre").forEach(x =>  window.hljs.highlightElement(x));
       }, 150);
     });
   </script>
