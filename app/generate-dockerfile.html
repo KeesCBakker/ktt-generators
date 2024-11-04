@@ -36,9 +36,9 @@
       ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
       ko.applyBindings(model, document.getElementById("source"));
 
-      setTimeout(function () {
-        document.querySelectorAll("pre").forEach(x =>  window.hljs.highlightElement(x));
-      }, 1000);
+      // setTimeout(function () {
+      //   document.querySelectorAll("pre").forEach(x => window.hljs.highlightElement(x));
+      // }, 1000);
     });
   </script>
   <div class="form">
@@ -50,7 +50,7 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
-    <div><label>Generator</label><span>v2.1.1</span></div>
+    <div><label>Generator</label><span>v2.1.2</span></div>
     <br />
   </div>
   <pre class="nohighlight" data-bind="saveHtmlContent: code" style="display: none">########################
@@ -185,7 +185,7 @@ ENTRYPOINT dotnet "$PROGRAM"</pre>
   <!-- /ko -->
 </div>
 <script type="text/html" id="codeTemplate">
-  <pre class="wp-block-code lang-dockerfile"><code data-bind="text: $data"></code></pre>
+  <pre class="wp-block-code lang-dockerfile" data-bind="text: $data"></pre>
 </script>
 <script>
   ko.bindingHandlers.saveHtmlContent = {
