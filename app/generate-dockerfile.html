@@ -48,7 +48,7 @@
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
     <br />
   </div>
-  <pre data-bind="saveHtmlContent: code" style="display: none">########################
+  <pre class="nohighlight" data-bind="saveHtmlContent: code" style="display: none">########################
 # Configuration settings
 ########################
 
@@ -59,7 +59,7 @@ ARG \
    PORT=<span data-bind="text: port"></span> \
    ASPNET_VERSION="<span data-bind="text: aspNetVersion"></span>" \
    # options: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic]
-   # minimal keeps your pipeline readable while inforing you what's going on
+   # minimal keeps your pipeline readable while informing you what's going on
    VERBOSITY="minimal" \
    APP_DIR="/app" \
    TAG="" <!-- ko if: addTesting -->\
@@ -82,7 +82,7 @@ ENV \
 WORKDIR /build
 
 # Let's restore the solution, nuget and project files and do a restore
-# in cachable layers. This will speed up the build process greatly
+# in cacheable layers. This will speed up the build process greatly
 
 # copy global files to restore
 COPY *.sln *.*config ./
