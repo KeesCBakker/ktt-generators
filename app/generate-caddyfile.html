@@ -1,6 +1,6 @@
 <div id="source">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
-  <script>
+  <script async>
     function Model() {
       let self = this;
 
@@ -27,10 +27,12 @@
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
+      hljs.addPlugin(new CopyButtonPlugin())
       const model = new Model();
       ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
       ko.applyBindings(model, document.getElementById("source"));
     });
+
   </script>
   <div class="form">
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
@@ -56,6 +58,8 @@
     <!-- /ko -->
 
     <div><label for="disableTls">Disable TLS:</label><input type="checkbox" id="disableTls" name="disableTls" data-bind="checked: disableTls" /></div>
+
+    <div><label>Generator</label><span>v1.0.1</span></div>
     <br />
   </div>
   <pre data-bind="saveHtmlContent: code" style="display: none">{

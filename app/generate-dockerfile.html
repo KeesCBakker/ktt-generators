@@ -32,9 +32,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
-
       hljs.addPlugin(new CopyButtonPlugin())
-
       const model = new Model();
       ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
       ko.applyBindings(model, document.getElementById("source"));
