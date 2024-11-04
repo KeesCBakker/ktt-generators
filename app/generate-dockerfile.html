@@ -38,7 +38,7 @@
 
       setTimeout(function () {
         document.querySelectorAll("pre").forEach(x =>  window.hljs.highlightElement(x));
-      }, 150);
+      }, 1000);
     });
   </script>
   <div class="form">
@@ -50,6 +50,7 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
+    <div><label>Generator</label><span>v2.1.1</span></div>
     <br />
   </div>
   <pre class="nohighlight" data-bind="saveHtmlContent: code" style="display: none">########################
