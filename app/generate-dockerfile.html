@@ -35,6 +35,10 @@
       const model = new Model();
       ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
       ko.applyBindings(model, document.getElementById("source"));
+
+      setTimeout(function () {
+        [...document.querySelectorAll("pre")].map(x => window.hljs.highlightElement(x));
+      }, 150);
     });
   </script>
   <div class="form">
@@ -273,13 +277,13 @@ ENTRYPOINT dotnet "$PROGRAM"</pre>
 
   @media screen and (max-width: 700px) {
     .form {
-        column-count: 1 !important;
+      column-count: 1 !important;
     }
-    
+
     .form br {
-        display: none;
+      display: none;
     }
-}
+  }
 </style>
 <script>
   ko.trackChange = (store, observable, key, echo = null) => {
