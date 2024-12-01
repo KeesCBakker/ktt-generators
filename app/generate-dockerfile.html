@@ -4,6 +4,7 @@
     function Model() {
       let self = this;
 
+      this.version = "v2.1.7";
       this.serviceName = ko.observable("Blaze.Prime.Service.Api");
       this.port = ko.observable("5000");
       this.aspNetVersion = ko.observable("8.0");
@@ -32,7 +33,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", function (event) {
-      hljs.addPlugin(new CopyButtonPlugin())
+      if(window.hljs){
+        window.hljs.addPlugin(new CopyButtonPlugin())
+      }
       const model = new Model();
       ko.persistChanges(model, "", { storage: new QueryStringStorage() }, 0);
       ko.applyBindings(model, document.getElementById("source"));
@@ -47,12 +50,12 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
-    <div><label>Generator</label><span>v2.1.6</span></div>
+    <div><label>Generator</label><span data-bind="text: version"></span></div>
     <br />
   </div>
-  <pre class="nohighlight" data-bind="saveHtmlContent: code" style="display: none">########################
-# Configuration settings
-########################
+  <pre class="nohighlight" data-bind="saveHtmlContent: code" style="display: none">#################################
+# Configuration settings (<span data-bind="text: version"></span>)
+#################################
 
 ARG MAIN_API_NAME="<span data-bind="text: serviceName"></span>"
 ARG \
