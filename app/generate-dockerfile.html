@@ -4,7 +4,7 @@
     function Model() {
       let self = this;
 
-      this.version = "v2.2.1";
+      this.version = "v2.2.2";
       this.serviceName = ko.observable("Ktt.Prime.Service.Api");
       this.port = ko.observable("5000");
       this.aspNetVersion = ko.observable("8.0");
@@ -71,9 +71,9 @@ ARG \
    # minimal keeps your pipeline readable while informing you what's going on
    VERBOSITY="minimal" \
    APP_DIR="/app" \
-   TAG="" <!-- ko if: addTesting -->\
+   TAG=""<!-- ko if: addTesting --> \
    EXECUTE_TESTS="true"
-   <!-- /ko -->
+<!-- /ko -->
 
 #########################################################################
 # Build image, uses VERBOSITY, EXECUTE_TESTS, PROJECTS_TO_PUBLISH, APP_DIR
