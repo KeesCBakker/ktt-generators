@@ -4,11 +4,12 @@
     function Model() {
       let self = this;
 
-      this.version = "v2.1.7";
+      this.version = "v2.2.0";
       this.serviceName = ko.observable("Ktt.Prime.Service.Api");
       this.port = ko.observable("5000");
       this.aspNetVersion = ko.observable("8.0");
       this.addTesting = ko.observable(true);
+      this.addIntegrationTesting = ko.observable(false);
       this.addMultiProjectSupport = ko.observable(true);
       this.otherProjects = ko.observable("");
       this.projectsToPublish = ko.computed(function () {
@@ -50,6 +51,7 @@
     </div>
     <div><label for="port">Port:</label><input type="number" min="0" id="port" name="port" data-bind="value: port, valueUpdate: 'afterkeydown'" /></div>
     <div><label for="addTesting">Add testing:</label><input type="checkbox" id="addTesting" name="addTesting" data-bind="checked: addTesting" /></div>
+    <div><label for="addIntegrationTesting">Integration testing:</label><input type="checkbox" id="addIntegrationTesting" name="addIntegrationTesting" data-bind="checked: addIntegrationTesting" /> (for test containers)</div>
     <div><label>Generator</label><span data-bind="text: version"></span></div>
     <br />
   </div>
@@ -121,19 +123,21 @@ RUN echo "" \
    && echo "" \
    && dotnet build --configuration Release --verbosity "$VERBOSITY" -nowarn:NETSDK1004 || exit 1
 
-# defining the argument here caches the previous layers when the value switches
-<!-- ko if: addTesting -->ARG EXECUTE_TESTS
-<!-- /ko -->RUN echo "" \<!-- ko if: addTesting -->
+<!-- ko if: addTesting --># defining the argument here caches the previous layers when the value switches
+ARG EXECUTE_TESTS
+RUN echo "" \
    && echo "-------" \
    && echo "TESTING" \
    && echo "-------" \
    && echo ""; \
    if [ "$EXECUTE_TESTS" = "true" ]; then \
-      dotnet test --configuration Release --logger "console;verbosity=$VERBOSITY" --no-build || exit 1; \
+      dotnet test <!-- ko if: addTesting -->--filter "Category!=Integration" <!-- /ko -->--configuration Release --logger "console;verbosity=$VERBOSITY" --no-build || exit 1; \
    else \
       echo "Skipping unit tests"; \
-   fi; \
-   echo "" \<!-- /ko -->
+   fi;
+   
+<!-- /ko --># publish project(s)
+RUN echo "" \
    && echo "----------" \
    && echo "PUBLISHING" \
    && echo "----------" \
@@ -146,6 +150,43 @@ RUN echo "" \
         --no-restore -nowarn:NETSDK1004 || exit 1; \
    done
 
+<!-- ko if: addTesting && addIntegrationTesting -->
+########################
+# Integration test image
+########################
+
+FROM mcr.microsoft.com/dotnet/sdk:$ASPNET_VERSION AS integration-test
+
+ENV \
+   TZ=Europe/Amsterdam \
+   DOTNET_CLI_TELEMETRY_OPTOUT=true \
+   DOTNET_NOLOGO=true
+
+WORKDIR /build
+
+# install Docker
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends docker.io procps && \
+    rm -rf /var/lib/apt/lists/*
+
+# copy entire build context
+COPY --from=build /build /build
+
+# run Docker daemon and tests
+CMD bash -euo pipefail -c '\
+  trap "echo Shutting down dockerd; pkill dockerd || true" EXIT; \
+  echo "Starting Docker daemon..."; \
+  dockerd > /var/log/dockerd.log 2>&1 & \
+  for i in {1..30}; do \
+    docker info > /dev/null 2>&1 && break || echo "Waiting for Docker... ($i/30)"; sleep 1; \
+  done; \
+  if ! docker info > /dev/null 2>&1; then \
+    echo "❌ Docker failed to start. Log output:"; cat /var/log/dockerd.log || echo "(No log found)"; exit 1; \
+  fi; \
+  echo "✅ Docker is ready. Running integration tests..."; \
+  dotnet test --filter "Category=Integration" --nologo --logger "console;verbosity=${VERBOSITY:-minimal}"'
+   
+<!-- /ko -->
 #####################################################################
 # Runtime image, uses PORT, TAG, MAIN_API_DLL, MAIN_API_NAME, APP_DIR
 #####################################################################
